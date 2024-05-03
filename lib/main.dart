@@ -21,12 +21,18 @@ class Scoreboard extends StatefulWidget {
 
 class _ScoreboardState extends State<Scoreboard> {
   int puntuacion = 0; // Puntuación total para ambos jugadores
-  String ultimoJugador = ''; // Nombre del último jugador que hizo una jugada
+  String turnoActual = 'Jugador'; // Control del turno actual
 
   @override
   Widget build(BuildContext context) {
-    List<Widget> jugador = List.generate(4, (index) => RandomColorCard(() => actualizarPuntuacion('Jugador')));
-    List<Widget> computadora = List.generate(4, (index) => RandomColorCard(() => actualizarPuntuacion('Computadora')));
+    List<Widget> jugador = List.generate(
+        4,
+        (index) =>
+            RandomColorCard(() => actualizarPuntuacion('Jugador'), turnoActual == 'Jugador'));
+    List<Widget> computadora = List.generate(
+        4,
+        (index) =>
+            RandomColorCard(() => actualizarPuntuacion('Computadora'), turnoActual == 'Computadora'));
 
     return Scaffold(
       appBar: AppBar(
@@ -75,7 +81,7 @@ class _ScoreboardState extends State<Scoreboard> {
   void actualizarPuntuacion(String jugador) {
     setState(() {
       puntuacion++; // Incrementar la puntuación con cada jugada
-      ultimoJugador = jugador; // Almacenar el nombre del último jugador que hizo una jugada
+      turnoActual = jugador == 'Jugador' ? 'Computadora' : 'Jugador'; // Cambiar al siguiente turno
       if (puntuacion >= 99) {
         mostrarMensajePerder();
       }
@@ -83,7 +89,7 @@ class _ScoreboardState extends State<Scoreboard> {
   }
 
   void mostrarMensajePerder() {
-    String ganador = ultimoJugador == 'Jugador' ? 'Computadora' : 'Jugador';
+    String ganador = turnoActual == 'Jugador' ? 'Computadora' : 'Jugador';
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -111,15 +117,16 @@ class _ScoreboardState extends State<Scoreboard> {
   void reiniciarJuego() {
     setState(() {
       puntuacion = 0;
-      ultimoJugador = '';
+      turnoActual = 'Jugador'; // Reiniciar al jugador como el primer turno
     });
   }
 }
 
 class RandomColorCard extends StatefulWidget {
   final Function() onTap;
+  final bool activo; // Indicador de si el botón está activo o no
 
-  RandomColorCard(this.onTap);
+  RandomColorCard(this.onTap, this.activo);
 
   @override
   _RandomColorCardState createState() => _RandomColorCardState();
@@ -152,10 +159,7 @@ class _RandomColorCardState extends State<RandomColorCard> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        widget.onTap();
-        _generateRandom();
-      },
+      onTap: widget.activo ? widget.onTap : null, // Deshabilitar el onTap si el botón no está activo
       child: Container(
         margin: EdgeInsets.all(15),
         decoration: BoxDecoration(
@@ -183,12 +187,9 @@ class _RandomColorCardState extends State<RandomColorCard> {
             ),
             SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () {
-                widget.onTap();
-                _generateRandom();
-              },
+              onPressed: widget.activo ? widget.onTap : null, // Deshabilitar el botón si no está activo
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.cyan,
+                backgroundColor: widget.activo ? Colors.cyan : Colors.grey, // Cambiar el color si está activo
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
