@@ -21,11 +21,12 @@ class Scoreboard extends StatefulWidget {
 
 class _ScoreboardState extends State<Scoreboard> {
   int puntuacion = 0; // Puntuación total para ambos jugadores
+  String ultimoJugador = ''; // Nombre del último jugador que hizo una jugada
 
   @override
   Widget build(BuildContext context) {
-    List<Widget> jugador = List.generate(4, (index) => RandomColorCard(actualizarPuntuacion));
-    List<Widget> computadora = List.generate(4, (index) => RandomColorCard(actualizarPuntuacion));
+    List<Widget> jugador = List.generate(4, (index) => RandomColorCard(() => actualizarPuntuacion('Jugador')));
+    List<Widget> computadora = List.generate(4, (index) => RandomColorCard(() => actualizarPuntuacion('Computadora')));
 
     return Scaffold(
       appBar: AppBar(
@@ -71,15 +72,52 @@ class _ScoreboardState extends State<Scoreboard> {
     );
   }
 
-  void actualizarPuntuacion(int numero) {
+  void actualizarPuntuacion(String jugador) {
     setState(() {
-      puntuacion += numero; // Incrementar la puntuación con el número generado aleatoriamente
+      puntuacion++; // Incrementar la puntuación con cada jugada
+      ultimoJugador = jugador; // Almacenar el nombre del último jugador que hizo una jugada
+      if (puntuacion >= 99) {
+        mostrarMensajePerder();
+      }
+    });
+  }
+
+  void mostrarMensajePerder() {
+    String ganador = ultimoJugador == 'Jugador' ? 'Computadora' : 'Jugador';
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('¡Perdiste!'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('¡$ganador ha ganado! Inténtalo de nuevo.'),
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () {
+                  reiniciarJuego();
+                  Navigator.of(context).pop();
+                },
+                child: Text('Reiniciar'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void reiniciarJuego() {
+    setState(() {
+      puntuacion = 0;
+      ultimoJugador = '';
     });
   }
 }
 
 class RandomColorCard extends StatefulWidget {
-  final Function(int) onTap;
+  final Function() onTap;
 
   RandomColorCard(this.onTap);
 
@@ -115,7 +153,7 @@ class _RandomColorCardState extends State<RandomColorCard> {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        widget.onTap(_randomNumber);
+        widget.onTap();
         _generateRandom();
       },
       child: Container(
@@ -146,7 +184,7 @@ class _RandomColorCardState extends State<RandomColorCard> {
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                widget.onTap(_randomNumber);
+                widget.onTap();
                 _generateRandom();
               },
               style: ElevatedButton.styleFrom(
